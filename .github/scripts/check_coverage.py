@@ -12,8 +12,8 @@ from pathlib import Path
 def _load_thresholds() -> dict[str, float]:
     thresholds = {
         "workspace": float(os.environ["COVERAGE_THRESHOLD_WORKSPACE"]),
-        "oxllm": float(os.environ["COVERAGE_THRESHOLD_OXLLM"]),
-        "oxllm-core": float(os.environ["COVERAGE_THRESHOLD_OXLLM_CORE"]),
+        "vortex-gateway": float(os.environ["COVERAGE_THRESHOLD_VORTEX_GATEWAY"]),
+        "vortex-gateway-core": float(os.environ["COVERAGE_THRESHOLD_VORTEX_CORE"]),
     }
     return thresholds
 

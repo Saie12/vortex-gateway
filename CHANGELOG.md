@@ -34,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **CORS headers**: `Access-Control-Allow-Origin: *` on all public endpoints
   (`/v1/chat/completions`, `/v1/embeddings`, `/v1/models`). Enables browser-based
   OpenAI SDKs (JavaScript, Vercel AI SDK) to call the proxy directly.
-- **`x-request-id` correlation**: Every response now includes an `oxllm-<hex>`
+- **`x-request-id` correlation**: Every response now includes an `vortex-gateway-<hex>`
   `x-request-id` header, visible in both success and error responses. The ID is
   also attached to all log lines and OTel spans (`proxy.request_id` attribute)
   for end-to-end request tracing.
@@ -83,23 +83,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.8] - 2026-06-01
 
 ### Fixed
-- `oxllm serve` now uses the `host` config field for IPv4 binding instead of
+- `vortex-gateway serve` now uses the `host` config field for IPv4 binding instead of
   hardcoding `127.0.0.1`. Set `host = "0.0.0.0"` to accept connections from
   other machines. Admin and status routes remain protected by `localhost_only`
   middleware regardless of bind address.
 - `localhost_only` middleware now correctly recognizes IPv4-mapped IPv6
-  loopback addresses (`::ffff:127.0.0.0/104`). This fixes CLI `oxllm status`
+  loopback addresses (`::ffff:127.0.0.0/104`). This fixes CLI `vortex-gateway status`
   failures when the server is bound to a dual-stack `[::]` socket.
 
 ## [0.1.7] - 2026-06-01
 
 ### Fixed
-- `oxllm --version` now reports the actual crate version from Cargo.toml
+- `vortex-gateway --version` now reports the actual crate version from Cargo.toml
   instead of a hardcoded `0.1.0` string (broken since v0.1.5).
   Uses `env!("CARGO_PKG_VERSION")` via clap derive.
 
 ### Added
-- Admin CLI commands now include `oxllm provider list|offline|online|reset`
+- Admin CLI commands now include `vortex-gateway provider list|offline|online|reset`
   for runtime provider management without curl.
 - `localhost_only` middleware protects admin/status/health/reload endpoints
   from non-loopback callers (403 Forbidden).
@@ -109,10 +109,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Admin API: `POST /admin/providers/{name}/offline|online|reset` — runtime provider management.
-- CLI: `oxllm provider list|offline|online|reset` subcommands — manage providers without curl.
-- `oxllm provider list` — condensed provider status table.
+- CLI: `vortex-gateway provider list|offline|online|reset` subcommands — manage providers without curl.
+- `vortex-gateway provider list` — condensed provider status table.
 - Friendly error messages when server not running (all CLI commands).
-- XDG config path support (`~/.config/oxllm/config.toml` with `./config.toml` fallback).
+- XDG config path support (`~/.config/vortex-gateway/config.toml` with `./config.toml` fallback).
 - Provider guide: `docs/providers.md` — free-tier services, model names verified live (2026-05-30).
 - Token counting from upstream JSON responses (non-streaming).
 
@@ -136,11 +136,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.5] - 2026-05-30
 
 ### Added
-- `oxllm stop` subcommand — gracefully stops the daemon via SIGTERM.
-- `oxllm serve -v` / `-vv` — verbosity flags for per-request routing info or full trace.
+- `vortex-gateway stop` subcommand — gracefully stops the daemon via SIGTERM.
+- `vortex-gateway serve -v` / `-vv` — verbosity flags for per-request routing info or full trace.
 - `POST /reload` HTTP endpoint — trigger config reload without shell access.
 - `bind_family` config option (`"ipv4"`, `"ipv6"`, `"dual"`) — dual-stack IPv4/IPv6 binding.
-- Last request time per provider — shown in `/status` and `oxllm status` ("Just now", "5m ago", etc.).
+- Last request time per provider — shown in `/status` and `vortex-gateway status` ("Just now", "5m ago", etc.).
 - Virtual model routing table in `/status` — shows each virtual model's fallback chain with per-hop health and counters.
 - Circuit transition logging at `info!` level — see when circuits open, close, or rate-limit.
 
@@ -150,12 +150,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Documentation
 - Installation section restructured: Homebrew first (easiest), then `cargo install`, then source build.
-- Full `oxllm status` output sample in README showing virtual model routing table.
+- Full `vortex-gateway status` output sample in README showing virtual model routing table.
 
 ## [0.1.4] - 2026-05-30
 
 ### Added
-- Local per-provider request/success/token counters visible via `GET /status` and `oxllm status` — no external collector needed.
+- Local per-provider request/success/token counters visible via `GET /status` and `vortex-gateway status` — no external collector needed.
 - `upstream_timeout_secs` config field in `[server]` section (default 5 seconds).
 - Multi-tier `config.toml` with `smart`/`basic` virtual models and local Ollama fallback.
 - Token counting from upstream JSON responses (non-streaming).
@@ -182,7 +182,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.2] - 2026-05-30
 
 ### Fixed
-- Calibrated CI coverage thresholds to match actual coverage (workspace 43%, oxllm-core 55%, oxllm 36%) — thresholds now set ~3pp below measured values so regressions are caught without false failures.
+- Calibrated CI coverage thresholds to match actual coverage (workspace 43%, vortex-gateway-core 55%, vortex-gateway 36%) — thresholds now set ~3pp below measured values so regressions are caught without false failures.
 
 ## [0.1.1] - 2026-05-30
 

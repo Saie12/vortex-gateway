@@ -1,10 +1,10 @@
-# `oxllm-core` 🦀
+# `vortex-gateway-core` 🦀
 
-[![Crates.io](https://img.shields.io/crates/v/oxllm-core.svg)](https://crates.io/crates/oxllm-core)
-[![Docs.rs](https://docs.rs/oxllm-core/badge.svg)](https://docs.rs/oxllm-core)
+[![Crates.io](https://img.shields.io/crates/v/vortex-gateway-core.svg)](https://crates.io/crates/vortex-gateway-core)
+[![Docs.rs](https://docs.rs/vortex-gateway-core/badge.svg)](https://docs.rs/vortex-gateway-core)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-`oxllm-core` is the core library engine behind **`oxllm`** (Oxide LLM Proxy). It is a minimalist, ultra-low-footprint, high-performance, and concurrency-safe LLM adaptive routing gateway library written in Rust.
+`vortex-gateway-core` is the core library engine behind **`vortex-gateway`** (Vortex Gateway). It is a minimalist, ultra-low-footprint, high-performance, and concurrency-safe LLM adaptive routing gateway library written in Rust.
 
 It is designed to be **fully generic and modular**, allowing you to build your own custom LLM proxies, local developer routers, or background networking daemons without any CLI or HTTP web framework dependencies.
 
@@ -23,14 +23,14 @@ It is designed to be **fully generic and modular**, allowing you to build your o
 
 ## 🛠️ Usage Example
 
-Here is how you can use `oxllm-core` to resolve candidate providers for a virtual model and select the healthiest option:
+Here is how you can use `vortex-gateway-core` to resolve candidate providers for a virtual model and select the healthiest option:
 
 ```rust
 use std::sync::Arc;
 use std::time::Duration;
-use oxllm_core::config::Config;
-use oxllm_core::state::{AppState, ProviderState, CircuitState};
-use oxllm_core::router::{RoutingStrategy, AdaptivePriorityStrategy};
+use vortex-gateway_core::config::Config;
+use vortex-gateway_core::state::{AppState, ProviderState, CircuitState};
+use vortex-gateway_core::router::{RoutingStrategy, AdaptivePriorityStrategy};
 use reqwest::Url;
 
 #[tokio::main]
@@ -86,4 +86,4 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ## 📄 License
 
-Licensed under the Apache License, Version 2.0. See [LICENSE](https://github.com/planetf1/oxllm/blob/main/LICENSE) for details.
+Licensed under the Apache License, Version 2.0. See [LICENSE](https://github.com/planetf1/vortex-gateway/blob/main/LICENSE) for details.

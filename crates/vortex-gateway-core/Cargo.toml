@@ -1,5 +1,5 @@
 [package]
-name = "oxllm-core"
+name = "vortex-gateway-core"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -7,7 +7,7 @@ authors.workspace = true
 license.workspace = true
 repository.workspace = true
 homepage.workspace = true
-description = "Core adaptive routing engine and telemetry worker for oxllm"
+description = "Core adaptive routing engine and telemetry worker for vortex-gateway"
 
 [dependencies]
 tokio = { workspace = true }

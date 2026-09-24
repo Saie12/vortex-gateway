@@ -1,6 +1,6 @@
-# CLAUDE.md - Developer Guide for `oxllm`
+# CLAUDE.md - Developer Guide for `vortex-gateway`
 
-This guide outlines the commands and guidelines for building, testing, linting, and maintaining the `oxllm` (Oxide LLM Proxy) codebase.
+This guide outlines the commands and guidelines for building, testing, linting, and maintaining the `vortex-gateway` (Vortex Gateway) codebase.
 
 ## Build Commands
 - **Check Compilation**: `cargo check`
@@ -19,5 +19,5 @@ This guide outlines the commands and guidelines for building, testing, linting, 
 
 ## Code Guidelines
 - **Pure Rust TLS**: Enforce pure-Rust TLS by compiling with reqwest's `rustls-tls` feature to avoid dynamially linking `OpenSSL` on targeted edge routers (OpenWrt/musl).
-- **Zero unwraps**: Never use `.unwrap()` or `.expect()` in user-facing paths. Convert all errors to `OxllmError` or map them gracefully.
+- **Zero unwraps**: Never use `.unwrap()` or `.expect()` in user-facing paths. Convert all errors to `VortexGatewayError` or map them gracefully.
 - **Lock-Free Hot Path**: Always preserve the lock-free atomic `probe_in_flight` permit when evaluating cooled down `HalfOpen` providers to defend against thundering herds under shared locks.

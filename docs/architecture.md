@@ -1,6 +1,6 @@
-# Technical Architecture & Design Document: `oxllm`
+# Technical Architecture & Design Document: `vortex-gateway`
 
-`oxllm` (Oxide LLM Proxy) is a minimalist, ultra-low-footprint adaptive routing gateway written in Rust. It exposes a single OpenAI-compatible interface, proxying requests to a tiered fallback pool of free-tier LLM providers. It operates entirely in memory with zero local disk persistence, making it highly optimized for edge devices, routers, and developer workstations.
+`vortex-gateway` (Vortex Gateway) is a minimalist, ultra-low-footprint adaptive routing gateway written in Rust. It exposes a single OpenAI-compatible interface, proxying requests to a tiered fallback pool of free-tier LLM providers. It operates entirely in memory with zero local disk persistence, making it highly optimized for edge devices, routers, and developer workstations.
 
 ---
 
@@ -23,7 +23,7 @@
        │
        ▼ (OpenAI Spec: :8080/v1/*)
 ┌────────────────────────────────────────────────────────┐
-│ oxllm Core Engine                                      │
+│ vortex-gateway Core Engine                                      │
 │                                                        │
 │  ┌──────────────────┐      ┌────────────────────────┐  │
 │  │   Axum Router    │ ────>│  In-Memory State Pool  │  │
@@ -158,12 +158,12 @@ To keep the binary free of intensive filesystem polling threads:
 
 ## 4. Telemetry Layer & Trace Context Propagation
 
-`oxllm` interacts with the `otelite` collector by pushing standard asynchronous OTLP/HTTP JSON payloads over port `4318`. 
+`vortex-gateway` interacts with the `otelite` collector by pushing standard asynchronous OTLP/HTTP JSON payloads over port `4318`. 
 
 ### 4.1. W3C Trace Context Propagation
-To enable seamless end-to-end trace auditing, `oxllm` participates in trace propagation:
+To enable seamless end-to-end trace auditing, `vortex-gateway` participates in trace propagation:
 * Extracts the incoming `traceparent` and `tracestate` HTTP headers from downstream client requests.
-* **Root Context Synthesis** *(planned, not yet implemented)*: If the incoming request has no active `traceparent`, `oxllm` should generate a valid root trace context before forwarding to `otelite` to maintain absolute continuous tracking.
+* **Root Context Synthesis** *(planned, not yet implemented)*: If the incoming request has no active `traceparent`, `vortex-gateway` should generate a valid root trace context before forwarding to `otelite` to maintain absolute continuous tracking.
 * Safely parses trace metadata via hex-decoding trace IDs (`[u8; 16]`) and span IDs (`[u8; 8]`), attaching context using `with_parent_context()`.
 * Inject W3C Trace Context headers into upstream requests to the selected provider.
 * Pushes standard parented spans to `otelite` so developers get continuous trace chains.
@@ -188,7 +188,7 @@ Every routed transaction generates an OpenTelemetry Span containing the official
 {
   "trace_id": "...",
   "span_id": "...",
-  "name": "oxllm.chat.completions",
+  "name": "vortex-gateway.chat.completions",
   "attributes": {
     "gen_ai.operation.name": "chat",
     "gen_ai.provider.name": "groq",
@@ -207,11 +207,11 @@ Every routed transaction generates an OpenTelemetry Span containing the official
 
 ### 5.1. Command Line Interface (CLI)
 The binary supports clean POSIX subcommands for daemon management and operational debugging:
-* `oxllm serve --config /path/to/config.toml` (Starts the proxy. Use `-v` for per-request routing info, `-vv` for full trace.)
-* `oxllm validate --config /path/to/config.toml` (Parses configuration syntax, resolves environment variables, checks upstream network paths, then exits)
-* `oxllm status` (Queries the running daemon locally over loopback and prints the virtual model routing table plus per-provider counters)
-* `oxllm stop` (Gracefully stops the daemon via SIGTERM — drains in-flight SSE streams before exiting)
-* `oxllm reload` (Finds the running `oxllm` daemon process and triggers SIGHUP immediately, or use `POST /reload` HTTP endpoint)
+* `vortex-gateway serve --config /path/to/config.toml` (Starts the proxy. Use `-v` for per-request routing info, `-vv` for full trace.)
+* `vortex-gateway validate --config /path/to/config.toml` (Parses configuration syntax, resolves environment variables, checks upstream network paths, then exits)
+* `vortex-gateway status` (Queries the running daemon locally over loopback and prints the virtual model routing table plus per-provider counters)
+* `vortex-gateway stop` (Gracefully stops the daemon via SIGTERM — drains in-flight SSE streams before exiting)
+* `vortex-gateway reload` (Finds the running `vortex-gateway` daemon process and triggers SIGHUP immediately, or use `POST /reload` HTTP endpoint)
 
 ### 5.2. Admin Route Protection
 To prevent external network actors from auditing provider credentials or configurations, all administrative endpoints (like `/status`, `/health`, `/reload`, and `/admin/providers/*`) are **localhost-restricted**. The `localhost_only` middleware accepts both IPv4 loopback (`127.0.0.1`) and IPv6-mapped IPv4 addresses (e.g., `::ffff:127.0.0.1`, added in v0.1.8). External callers receive an immediate `403 Forbidden`.
@@ -223,42 +223,42 @@ OpenAI SDKs (JavaScript, Vercel AI SDK) to call the proxy directly.
 
 ### 5.4. Daemon Configuration (Service Mode)
 
-#### macOS Lifecycle (`/Library/LaunchDaemons/org.oxllm.plist`)
+#### macOS Lifecycle (`/Library/LaunchDaemons/org.vortex-gateway.plist`)
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>org.oxllm.proxy</string>
+    <string>org.vortex-gateway.proxy</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/usr/local/bin/oxllm</string>
+        <string>/usr/local/bin/vortex-gateway</string>
         <string>serve</string>
         <string>--config</string>
-        <string>/etc/oxllm/config.toml</string>
+        <string>/etc/vortex-gateway/config.toml</string>
     </array>
     <key>RunAtLoad</key>
     <true/>
     <key>KeepAlive</key>
     <true/>
     <key>StandardOutPath</key>
-    <string>/var/log/oxllm.log</string>
+    <string>/var/log/vortex-gateway.log</string>
     <key>StandardErrorPath</key>
-    <string>/var/log/oxllm.err</string>
+    <string>/var/log/vortex-gateway.err</string>
 </dict>
 </plist>
 ```
 
-#### Linux Lifecycle (`/etc/systemd/system/oxllm.service`)
+#### Linux Lifecycle (`/etc/systemd/system/vortex-gateway.service`)
 ```ini
 [Unit]
-Description=Oxide LLM Proxy
+Description=Vortex Gateway
 After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/oxllm serve --config /etc/oxllm/config.toml
+ExecStart=/usr/local/bin/vortex-gateway serve --config /etc/vortex-gateway/config.toml
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure
 RestartSec=5s

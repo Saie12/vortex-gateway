@@ -4,7 +4,7 @@
 > change frequently. This guide reflects what was current at the snapshot date.
 > Always verify current status on the provider's website before committing to a setup.
 
-`oxllm` routes requests through a configurable pool of LLM providers. This guide documents the free-tier services supported by the default `config.toml`, what models are available, and their typical rate limits.
+`vortex-gateway` routes requests through a configurable pool of LLM providers. This guide documents the free-tier services supported by the default `config.toml`, what models are available, and their typical rate limits.
 
 ---
 
@@ -42,7 +42,7 @@ To verify the current free tier status of any provider:
   provider's Discord. Free tiers that have existed for months are more trustworthy.
 - **Test with a small request** — if you get a 402 Payment Required or 403 Forbidden,
   the model may no longer be free.
-- **Monitor your rate limits** via `oxllm status` — if a provider consistently returns
+- **Monitor your rate limits** via `vortex-gateway status` — if a provider consistently returns
   429s, you may have hit undocumented per-day caps.
 
 ---
@@ -188,7 +188,7 @@ Bypasses the expensive strong models entirely. Use for high-volume bulk work.
    ```
 3. **Start the proxy:**
    ```bash
-   oxllm serve
+   vortex-gateway serve
    ```
 4. **Test it:**
    ```bash

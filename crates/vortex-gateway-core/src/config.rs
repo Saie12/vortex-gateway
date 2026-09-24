@@ -1,4 +1,4 @@
-use crate::error::{OxllmError, Result};
+use crate::error::{Result, VortexGatewayError};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
@@ -40,8 +40,9 @@ pub struct Config {
 impl Config {
     /// Loads a TOML configuration file and expands environment variables of style `${VAR_NAME}`.
     pub fn load_from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
-        let content = fs::read_to_string(path)
-            .map_err(|e| OxllmError::ConfigLoad(format!("Failed to read config file: {}", e)))?;
+        let content = fs::read_to_string(path).map_err(|e| {
+            VortexGatewayError::ConfigLoad(format!("Failed to read config file: {}", e))
+        })?;
 
         let expanded = expand_env_vars(&content)?;
         let config: Config = toml::from_str(&expanded)?;
@@ -58,7 +59,7 @@ impl Config {
 
         // 1. Validate that at least one provider is configured
         if self.providers.is_empty() {
-            return Err(OxllmError::ConfigLoad(
+            return Err(VortexGatewayError::ConfigLoad(
                 "At least one provider must be defined".into(),
             ));
         }
@@ -66,7 +67,7 @@ impl Config {
         // 2. Validate that virtual models target existing, enabled providers
         for (vm_name, targets) in &self.virtual_models {
             if targets.is_empty() {
-                return Err(OxllmError::ConfigLoad(format!(
+                return Err(VortexGatewayError::ConfigLoad(format!(
                     "Virtual model '{}' has no targets configured",
                     vm_name
                 )));
@@ -81,7 +82,7 @@ impl Config {
                         }
                     },
                     None => {
-                        return Err(OxllmError::ConfigLoad(format!(
+                        return Err(VortexGatewayError::ConfigLoad(format!(
                             "Virtual model '{}' targets undefined provider '{}'",
                             vm_name, target.provider
                         )));
@@ -125,7 +126,7 @@ pub fn expand_env_vars(raw_content: &str) -> Result<String> {
                 }
 
                 if !found_close {
-                    return Err(OxllmError::ConfigLoad(format!(
+                    return Err(VortexGatewayError::ConfigLoad(format!(
                         "Unclosed environment variable placeholder starting at index {}",
                         idx
                     )));
@@ -133,7 +134,7 @@ pub fn expand_env_vars(raw_content: &str) -> Result<String> {
 
                 // Strictly resolve environment variable
                 let val = std::env::var(&var_name)
-                    .map_err(|_| OxllmError::EnvVarMissing(var_name.clone()))?;
+                    .map_err(|_| VortexGatewayError::EnvVarMissing(var_name.clone()))?;
 
                 expanded.push_str(&val);
                 continue;
@@ -172,7 +173,7 @@ mod tests {
         let input = r#"api_key = "${MISSING_VAR_XYZ}""#;
         let result = expand_env_vars(input);
         assert!(
-            matches!(result, Err(OxllmError::EnvVarMissing(ref name)) if name == "MISSING_VAR_XYZ")
+            matches!(result, Err(VortexGatewayError::EnvVarMissing(ref name)) if name == "MISSING_VAR_XYZ")
         );
     }
 
@@ -180,6 +181,6 @@ mod tests {
     fn test_expand_env_vars_unclosed() {
         let input = r#"api_key = "${UNCLOSED"#;
         let result = expand_env_vars(input);
-        assert!(matches!(result, Err(OxllmError::ConfigLoad(_))));
+        assert!(matches!(result, Err(VortexGatewayError::ConfigLoad(_))));
     }
 }

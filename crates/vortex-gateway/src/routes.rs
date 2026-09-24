@@ -13,9 +13,9 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tracing::{debug, error, warn};
 
-use oxllm_core::router::{AdaptivePriorityStrategy, RoutingStrategy};
-use oxllm_core::state::{AppState, CircuitState, ProviderState};
-use oxllm_core::telemetry::{TelemetryClient, TelemetryEvent};
+use vortex_gateway_core::router::{AdaptivePriorityStrategy, RoutingStrategy};
+use vortex_gateway_core::state::{AppState, CircuitState, ProviderState};
+use vortex_gateway_core::telemetry::{TelemetryClient, TelemetryEvent};
 
 #[derive(Serialize)]
 struct ModelObject {
@@ -70,7 +70,7 @@ pub async fn list_models(State(app_state): State<Arc<AppState>>) -> impl IntoRes
                 id: vm_name.clone(),
                 object: "model",
                 created: 1717070400, // May 30, 2026 constant
-                owned_by: "oxllm-virtual",
+                owned_by: "vortex-gateway-virtual",
             });
         }
     }

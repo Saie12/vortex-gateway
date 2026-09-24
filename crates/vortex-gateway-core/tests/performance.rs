@@ -1,10 +1,10 @@
-use oxllm_core::router::{AdaptivePriorityStrategy, RoutingStrategy};
-use oxllm_core::state::{CircuitState, ProviderState};
 use reqwest::Url;
 use std::sync::atomic::{AtomicBool, AtomicU64};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
+use vortex_gateway_core::router::{AdaptivePriorityStrategy, RoutingStrategy};
+use vortex_gateway_core::state::{CircuitState, ProviderState};
 
 #[tokio::test]
 async fn test_routing_loop_latency_performance() {

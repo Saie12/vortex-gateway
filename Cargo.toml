@@ -11,8 +11,8 @@ edition = "2021"
 rust-version = "1.85.1"
 authors = ["Nigel Jones"]
 license = "Apache-2.0"
-repository = "https://github.com/planetf1/vortex-gateway"
-homepage = "https://github.com/planetf1/vortex-gateway"
+repository = "https://github.com/Saie12/vortex-gateway"
+homepage = "https://github.com/Saie12/vortex-gateway"
 
 [workspace.dependencies]
 tokio = { version = "1", features = ["full"] }

@@ -1,0 +1,230 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  # Set thresholds tailored to oxllm codebase
+  # Thresholds set ~3pp below actual coverage to catch regressions without false-alarming.
+  # Actual as of 2026-05-30: workspace 46.17, oxllm 39.55, oxllm-core 58.00
+  COVERAGE_THRESHOLD_WORKSPACE: "43"
+  COVERAGE_THRESHOLD_OXLLM: "36"
+  COVERAGE_THRESHOLD_OXLLM_CORE: "55"
+
+jobs:
+  format:
+    name: Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659  # v1
+        with:
+          toolchain: stable
+          components: rustfmt
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+  lint:
+    name: Lint (Clippy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659  # v1
+        with:
+          toolchain: stable
+          components: clippy
+
+      - name: Run Clippy
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        rust: [stable]
+
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659  # v1
+        with:
+          toolchain: ${{ matrix.rust }}
+
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@e67fa11c4b9316fa714ddf0abed07a0c3143b95b  # v2
+        with:
+          tool: cargo-nextest
+
+      - name: Build
+        run: cargo build --workspace --all-features --verbose
+
+      - name: Run all tests (nextest)
+        run: cargo nextest run --workspace --all-features
+
+      - name: Run doc tests
+        run: cargo test --workspace --doc --all-features
+
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    outputs:
+      workspace_coverage: ${{ steps.coverage.outputs.workspace }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659  # v1
+        with:
+          toolchain: stable
+          components: llvm-tools-preview
+
+      - name: Install coverage tooling
+        uses: taiki-e/install-action@e67fa11c4b9316fa714ddf0abed07a0c3143b95b  # v2
+        with:
+          tool: cargo-llvm-cov
+
+      - name: Generate workspace LCOV report
+        run: cargo llvm-cov --workspace --all-features --lcov --output-path lcov.info
+
+      - name: Generate coverage JSON summary
+        run: cargo llvm-cov --workspace --all-features --json --output-path coverage.json
+
+      - name: Enforce workspace and crate thresholds
+        id: coverage
+        run: python3 .github/scripts/check_coverage.py coverage.json
+        env:
+          COVERAGE_THRESHOLD_WORKSPACE: ${{ env.COVERAGE_THRESHOLD_WORKSPACE }}
+          COVERAGE_THRESHOLD_OXLLM: ${{ env.COVERAGE_THRESHOLD_OXLLM }}
+          COVERAGE_THRESHOLD_OXLLM_CORE: ${{ env.COVERAGE_THRESHOLD_OXLLM_CORE }}
+
+      - name: Upload coverage JSON artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        with:
+          name: coverage-summary
+          path: coverage.json
+
+      - name: Upload coverage HTML artifact
+        run: cargo llvm-cov --workspace --all-features --html
+
+      - name: Store coverage trend artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+        with:
+          name: coverage-html-report
+          path: target/llvm-cov/html
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238  # v4
+        with:
+          files: lcov.info
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: unittests
+          verbose: true
+
+      - name: Comment coverage summary on PR
+        if: github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405  # v2
+        with:
+          header: coverage-report
+          message: |
+            ## Coverage report
+            - Workspace line coverage: **${{ steps.coverage.outputs.workspace }}%**
+            - Minimum workspace threshold: **${{ env.COVERAGE_THRESHOLD_WORKSPACE }}%**
+            - Per-crate thresholds enforced in CI:
+              - `oxllm`: `${{ env.COVERAGE_THRESHOLD_OXLLM }}%`
+              - `oxllm-core`: `${{ env.COVERAGE_THRESHOLD_OXLLM_CORE }}%`
+            - Detailed HTML and JSON reports are available in the workflow artifacts and in Codecov trends.
+
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659  # v1
+        with:
+          toolchain: stable
+
+      - name: Install cargo-audit
+        uses: taiki-e/install-action@e67fa11c4b9316fa714ddf0abed07a0c3143b95b  # v2
+        with:
+          tool: cargo-audit
+
+      - name: Run security audit
+        run: cargo audit
+
+  dependencies:
+    name: Dependency Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659  # v1
+        with:
+          toolchain: stable
+
+      - name: Install cargo-outdated
+        uses: taiki-e/install-action@e67fa11c4b9316fa714ddf0abed07a0c3143b95b  # v2
+        with:
+          tool: cargo-outdated
+
+      - name: Check for outdated dependencies
+        run: cargo outdated --exit-code 1 || true
+
+  docs:
+    name: Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659  # v1
+        with:
+          toolchain: stable
+
+      - name: Build documentation
+        run: cargo doc --workspace --all-features --no-deps --document-private-items
+
+      - name: Check for broken links
+        run: |
+          cargo install cargo-deadlinks || true
+          cargo deadlinks --check-http || true
+
+  ci-success:
+    name: CI Success
+    needs: [format, lint, test, coverage, security]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Check all jobs
+        run: |
+          if [[ "${{ needs.format.result }}" != "success" ]] || \
+             [[ "${{ needs.lint.result }}" != "success" ]] || \
+             [[ "${{ needs.test.result }}" != "success" ]] || \
+             [[ "${{ needs.coverage.result }}" != "success" ]] || \
+             [[ "${{ needs.security.result }}" != "success" ]]; then
+            echo "❌ One or more CI jobs failed"
+            exit 1
+          fi
+          echo "✅ All CI jobs passed"

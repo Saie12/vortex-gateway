@@ -1,10 +1,10 @@
-# `vortex-gateway` 🦀 (Vortex Gateway Binary)
+# `velarium-gateway` 🦀 (Velarium Gateway Binary)
 
-[![Crates.io](https://img.shields.io/crates/v/vortex-gateway.svg)](https://crates.io/crates/vortex-gateway)
-[![Docs.rs](https://docs.rs/vortex-gateway/badge.svg)](https://docs.rs/vortex-gateway)
+[![Crates.io](https://img.shields.io/crates/v/velarium-gateway.svg)](https://crates.io/crates/velarium-gateway)
+[![Docs.rs](https://docs.rs/velarium-gateway/badge.svg)](https://docs.rs/velarium-gateway)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-`vortex-gateway` is the binary gateway application for **Vortex Gateway** — an ultra-minimalist, high-resilience adaptive routing LLM gateway written in Rust.
+`velarium-gateway` is the binary gateway application for **Velarium Gateway** — an ultra-minimalist, high-resilience adaptive routing LLM gateway written in Rust.
 
 It exposes a single OpenAI-compatible HTTP interface (`POST /v1/chat/completions`, `POST /v1/embeddings`, `GET /v1/models`), proxying requests to a tiered fallback pool of LLM providers with automatic rate-limit detection, circuit breakers, and SIGHUP hot-reloading.
 
@@ -21,19 +21,19 @@ It exposes a single OpenAI-compatible HTTP interface (`POST /v1/chat/completions
 
 ## 📦 Installation
 
-You can install the `vortex-gateway` binary using either **Homebrew** (recommended for pre-compiled speed) or **Cargo**:
+You can install the `velarium-gateway` binary using either **Homebrew** (recommended for pre-compiled speed) or **Cargo**:
 
 ### 1. Via Homebrew (Pre-compiled)
 Install the pre-compiled binary instantly using your Homebrew formula tap:
 ```bash
 brew tap Saie12/homebrew-tap
-brew install vortex-gateway
+brew install velarium-gateway
 ```
 
 ### 2. Via Cargo (Compiled from source)
 Install the binary directly from crates.io by compiling it on your machine:
 ```bash
-cargo install vortex-gateway
+cargo install velarium-gateway
 ```
 
 ---
@@ -44,16 +44,16 @@ Manage the daemon using simple, standard CLI commands:
 
 ```bash
 # Starts the gateway server in the foreground (binds host:port from config)
-vortex-gateway serve --config config.toml
+velarium-gateway serve --config config.toml
 
 # Parses and validates configuration syntax and cross-references virtual models
-vortex-gateway validate --config config.toml
+velarium-gateway validate --config config.toml
 
 # Queries the running daemon locally and prints a beautiful ASCII status table
-vortex-gateway status
+velarium-gateway status
 
-# Triggers a SIGHUP config hot-reload on the active vortex-gateway process
-vortex-gateway reload
+# Triggers a SIGHUP config hot-reload on the active velarium-gateway process
+velarium-gateway reload
 ```
 
 ---
@@ -72,4 +72,4 @@ vortex-gateway reload
 
 ## 📄 License
 
-Licensed under the Apache License, Version 2.0. See [LICENSE](https://github.com/Saie12/vortex-gateway/blob/main/LICENSE) for details.
+Licensed under the Apache License, Version 2.0. See [LICENSE](https://github.com/Saie12/velarium-gateway/blob/main/LICENSE) for details.

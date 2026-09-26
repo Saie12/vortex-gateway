@@ -121,7 +121,7 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       BUILD_MANIFEST_NAME: target/distrib/${{ join(matrix.targets, '-') }}-dist-manifest.json
-      VORTEX_GATEWAY_GIT_SHA: ${{ github.sha }}
+      VELARIUM_GATEWAY_GIT_SHA: ${{ github.sha }}
     steps:
       - name: enable windows longpaths
         run: |

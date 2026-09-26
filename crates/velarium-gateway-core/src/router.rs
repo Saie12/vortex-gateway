@@ -159,13 +159,13 @@ impl RoutingStrategy for AdaptivePriorityStrategy {
             if is_probe {
                 provider.probe_in_flight.store(false, Ordering::SeqCst);
                 info!(
-                    target: "vortex-gateway_core::router",
+                    target: "velarium-gateway_core::router",
                     "HalfOpen probe succeeded for {} — circuit closed",
                     provider.name
                 );
             } else {
                 info!(
-                    target: "vortex-gateway_core::router",
+                    target: "velarium-gateway_core::router",
                     "Circuit closed for {} after successful request",
                     provider.name
                 );
@@ -184,7 +184,7 @@ impl RoutingStrategy for AdaptivePriorityStrategy {
                 let mut rl = provider.rate_limited_until.write().await;
                 *rl = Some(now + cooldown);
                 info!(
-                    target: "vortex-gateway_core::router",
+                    target: "velarium-gateway_core::router",
                     "Rate-limited {} for {}s",
                     provider.name, cooldown.as_secs()
                 );
@@ -199,7 +199,7 @@ impl RoutingStrategy for AdaptivePriorityStrategy {
                     until: now + cooldown,
                 };
                 info!(
-                    target: "vortex-gateway_core::router",
+                    target: "velarium-gateway_core::router",
                     "Circuit opened for {} for {}s ({} consecutive failures)",
                     provider.name, cooldown.as_secs(), *failures
                 );

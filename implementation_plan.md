@@ -1,6 +1,6 @@
-# Finalized Technical Implementation Plan - `vortex-gateway` (Vortex Gateway)
+# Finalized Technical Implementation Plan - `velarium-gateway` (Velarium Gateway)
 
-`vortex-gateway` is a minimalist, ultra-low-footprint adaptive routing LLM gateway written in Rust. It exposes an OpenAI-compatible interface, proxying requests to a tiered fallback pool of free-tier LLM providers with automatic rate-limit detection, circuit breakers, signal-based configuration reloading, and lightweight asynchronous OTel metrics/traces.
+`velarium-gateway` is a minimalist, ultra-low-footprint adaptive routing LLM gateway written in Rust. It exposes an OpenAI-compatible interface, proxying requests to a tiered fallback pool of free-tier LLM providers with automatic rate-limit detection, circuit breakers, signal-based configuration reloading, and lightweight asynchronous OTel metrics/traces.
 
 ---
 
@@ -27,7 +27,7 @@ Based on our interactive design alignment and expert reviews, we have locked dow
 5. **Standard OTel Integration & W3C Trace Propagation**:
    * Telemetry uses standard `opentelemetry` (`0.28`), `opentelemetry_sdk` (`0.28`), and `opentelemetry-otlp` (`0.28`) crates with the `http-json` and `reqwest-rustls` features.
    * **W3C Trace Context Propagation**: We will extract incoming `traceparent` headers, participate as a middle/child span in the trace chain, and inject W3C Trace Context headers into upstream requests to the selected provider.
-   * **Root Context Generation**: If the incoming request has no active `traceparent`, `vortex-gateway` generates a valid root trace context before forwarding to `otelite` to maintain absolute continuous tracking.
+   * **Root Context Generation**: If the incoming request has no active `traceparent`, `velarium-gateway` generates a valid root trace context before forwarding to `otelite` to maintain absolute continuous tracking.
 6. **Connection & Handshake Timeouts**:
    * We will enforce a configurable `upstream_timeout_secs` (defaulting to 5 seconds) in `config.toml`. If a provider takes longer than this to connect or complete its handshake, it is treated as a `5xx` connection error, triggering immediate failover.
 7. **Security for Administrative Routes**:
@@ -46,8 +46,8 @@ Based on our interactive design alignment and expert reviews, we have locked dow
 12. **Aggressive Compiler Options (Musl Edge Footprints)**:
     * Standard stripped release parameters added directly to the workspace `Cargo.toml` to enforce a tight binary footprint (<15MB) across `musl` cross-compilation targets.
 13. **Cargo Workspace Structure**:
-    * **`crates/vortex-gateway-core`**: Core logic, TOML config parser with native Unix `${VAR}` env expansion, `RoutingStrategy` trait, `AdaptivePriorityStrategy`, and telemetry worker.
-    * **`crates/vortex-gateway`**: CLI binary, Axum web routing, and `SIGHUP` POSIX signal handling.
+    * **`crates/velarium-gateway-core`**: Core logic, TOML config parser with native Unix `${VAR}` env expansion, `RoutingStrategy` trait, `AdaptivePriorityStrategy`, and telemetry worker.
+    * **`crates/velarium-gateway`**: CLI binary, Axum web routing, and `SIGHUP` POSIX signal handling.
 
 ---
 
@@ -55,8 +55,8 @@ Based on our interactive design alignment and expert reviews, we have locked dow
 
 ```mermaid
 graph TD
-    Workspace[Workspace Root] --> CoreCrate[crates/vortex-gateway-core]
-    Workspace --> CliCrate[crates/vortex-gateway]
+    Workspace[Workspace Root] --> CoreCrate[crates/velarium-gateway-core]
+    Workspace --> CliCrate[crates/velarium-gateway]
     CoreCrate --> Config[config.rs: parse & env expansion]
     CoreCrate --> State[state.rs: Arc-RwLock Provider Pool]
     CoreCrate --> Router[router.rs: RoutingStrategy Trait & Adaptive Decay]
@@ -68,14 +68,14 @@ graph TD
 
 ### Files to Create
 
-#### [NEW] [Cargo.toml](file:///Users/jonesn/src/vortex-gateway/Cargo.toml)
+#### [NEW] [Cargo.toml](file:///Users/jonesn/src/velarium-gateway/Cargo.toml)
 Declares the workspace members, dependency mapping, and optimized release flags.
 ```toml
 [workspace]
 resolver = "2"
 members = [
-    "crates/vortex-gateway",
-    "crates/vortex-gateway-core",
+    "crates/velarium-gateway",
+    "crates/velarium-gateway-core",
 ]
 
 [workspace.package]
@@ -84,8 +84,8 @@ edition = "2021"
 rust-version = "1.85.1"
 authors = ["Saie12"]
 license = "Apache-2.0"
-repository = "https://github.com/Saie12/vortex-gateway"
-homepage = "https://github.com/Saie12/vortex-gateway"
+repository = "https://github.com/Saie12/velarium-gateway"
+homepage = "https://github.com/Saie12/velarium-gateway"
 
 [workspace.dependencies]
 tokio = { version = "1", features = ["full"] }
@@ -120,7 +120,7 @@ inherits = "release"
 lto = "thin"
 ```
 
-#### [NEW] [rustfmt.toml](file:///Users/jonesn/src/vortex-gateway/rustfmt.toml)
+#### [NEW] [rustfmt.toml](file:///Users/jonesn/src/velarium-gateway/rustfmt.toml)
 Enforces formatting standards identical to your other projects:
 ```toml
 edition                     = "2021"
@@ -137,7 +137,7 @@ match_block_trailing_comma  = true
 newline_style               = "Unix"
 ```
 
-#### [NEW] [dist-workspace.toml](file:///Users/jonesn/src/vortex-gateway/dist-workspace.toml)
+#### [NEW] [dist-workspace.toml](file:///Users/jonesn/src/velarium-gateway/dist-workspace.toml)
 Declares Homebrew distribution setups:
 ```toml
 [workspace]
@@ -155,11 +155,11 @@ install-updater = false
 allow-dirty = ["ci"]
 ```
 
-#### [NEW] [crates/vortex-gateway-core/Cargo.toml](file:///Users/jonesn/src/vortex-gateway/crates/vortex-gateway-core/Cargo.toml)
+#### [NEW] [crates/velarium-gateway-core/Cargo.toml](file:///Users/jonesn/src/velarium-gateway/crates/velarium-gateway-core/Cargo.toml)
 Declares dependencies for core library components.
 ```toml
 [package]
-name = "vortex-gateway-core"
+name = "velarium-gateway-core"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -167,7 +167,7 @@ authors.workspace = true
 license.workspace = true
 repository.workspace = true
 homepage.workspace = true
-description = "Core adaptive routing engine and telemetry worker for vortex-gateway"
+description = "Core adaptive routing engine and telemetry worker for velarium-gateway"
 
 [dependencies]
 tokio = { workspace = true }
@@ -185,29 +185,29 @@ opentelemetry-otlp = { workspace = true }
 opentelemetry-semantic-conventions = { workspace = true }
 ```
 
-#### [NEW] [crates/vortex-gateway-core/src/lib.rs](file:///Users/jonesn/src/vortex-gateway/crates/vortex-gateway-core/src/lib.rs)
+#### [NEW] [crates/velarium-gateway-core/src/lib.rs](file:///Users/jonesn/src/velarium-gateway/crates/velarium-gateway-core/src/lib.rs)
 Exposes modules for the workspace.
 
-#### [NEW] [crates/vortex-gateway-core/src/error.rs](file:///Users/jonesn/src/vortex-gateway/crates/vortex-gateway-core/src/error.rs)
-Defines a robust, public `VortexGatewayError` enum mapping all core domain, parsing, and routing errors.
+#### [NEW] [crates/velarium-gateway-core/src/error.rs](file:///Users/jonesn/src/velarium-gateway/crates/velarium-gateway-core/src/error.rs)
+Defines a robust, public `VelariumGatewayError` enum mapping all core domain, parsing, and routing errors.
 
-#### [NEW] [crates/vortex-gateway-core/src/config.rs](file:///Users/jonesn/src/vortex-gateway/crates/vortex-gateway-core/src/config.rs)
+#### [NEW] [crates/velarium-gateway-core/src/config.rs](file:///Users/jonesn/src/velarium-gateway/crates/velarium-gateway-core/src/config.rs)
 Declares the configuration types and performs shell-style `${VAR}` expansion natively.
 
-#### [NEW] [crates/vortex-gateway-core/src/router.rs](file:///Users/jonesn/src/vortex-gateway/crates/vortex-gateway-core/src/router.rs)
+#### [NEW] [crates/velarium-gateway-core/src/router.rs](file:///Users/jonesn/src/velarium-gateway/crates/velarium-gateway-core/src/router.rs)
 Defines the `RoutingStrategy` trait, `AdaptivePriorityStrategy` (including `HalfOpen` probe-locking logic), and logic for penalty decay and backoffs.
 
-#### [NEW] [crates/vortex-gateway-core/src/state.rs](file:///Users/jonesn/src/vortex-gateway/crates/vortex-gateway-core/src/state.rs)
+#### [NEW] [crates/velarium-gateway-core/src/state.rs](file:///Users/jonesn/src/velarium-gateway/crates/velarium-gateway-core/src/state.rs)
 Implements the shared concurrent in-memory `AppState` wrapper protecting the active provider states behind async locks.
 
-#### [NEW] [crates/vortex-gateway-core/src/telemetry.rs](file:///Users/jonesn/src/vortex-gateway/crates/vortex-gateway-core/src/telemetry.rs)
+#### [NEW] [crates/velarium-gateway-core/src/telemetry.rs](file:///Users/jonesn/src/velarium-gateway/crates/velarium-gateway-core/src/telemetry.rs)
 Implements the non-blocking standard OTel batch span processor and telemetry pipeline, backed by bounded channel drops under OOM pressure.
 
-#### [NEW] [crates/vortex-gateway/Cargo.toml](file:///Users/jonesn/src/vortex-gateway/crates/vortex-gateway/Cargo.toml)
-Exposes HTTP dependencies (Axum) and lists `vortex-gateway-core` as an internal dependency.
+#### [NEW] [crates/velarium-gateway/Cargo.toml](file:///Users/jonesn/src/velarium-gateway/crates/velarium-gateway/Cargo.toml)
+Exposes HTTP dependencies (Axum) and lists `velarium-gateway-core` as an internal dependency.
 ```toml
 [package]
-name = "vortex-gateway"
+name = "velarium-gateway"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -218,7 +218,7 @@ homepage.workspace = true
 description = "Minimalist adaptive routing LLM proxy in Rust"
 
 [dependencies]
-vortex-gateway-core = { path = "../vortex-gateway-core", version = "0.1.0" }
+velarium-gateway-core = { path = "../velarium-gateway-core", version = "0.1.0" }
 tokio = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -234,10 +234,10 @@ futures-util = { workspace = true }
 pretty_assertions = "1"
 ```
 
-#### [NEW] [crates/vortex-gateway/src/main.rs](file:///Users/jonesn/src/vortex-gateway/crates/vortex-gateway/src/main.rs)
+#### [NEW] [crates/velarium-gateway/src/main.rs](file:///Users/jonesn/src/velarium-gateway/crates/velarium-gateway/src/main.rs)
 Initializes CLI flag parsers, reads the initial config, spawns the telemetry background thread, registers the SIGHUP unix reload listener (utilizing `tokio::sync::watch`), and binds the Axum listener.
 
-#### [NEW] [crates/vortex-gateway/src/routes.rs](file:///Users/jonesn/src/vortex-gateway/crates/vortex-gateway/src/routes.rs)
+#### [NEW] [crates/velarium-gateway/src/routes.rs](file:///Users/jonesn/src/velarium-gateway/crates/velarium-gateway/src/routes.rs)
 Defines Axum endpoints: `/v1/models`, `/v1/embeddings`, and `/v1/chat/completions` (supporting SSE chunk-streaming via `bytes_stream()` wrapped in Axum's `Sse` and `tokio_stream` mappings), utilizing `{param}` syntax.
 
 ---
@@ -247,7 +247,7 @@ Defines Axum endpoints: `/v1/models`, `/v1/embeddings`, and `/v1/chat/completion
 * **Phase 1: Project & Workspace Layout**
   Create root workspace `Cargo.toml`, `rustfmt.toml`, `dist-workspace.toml`, and the basic sub-directories. Set up stripped release flags for binary size optimizations (<15MB).
 * **Phase 2: Configuration, Errors & Env Expansion**
-  Implement the standard `VortexGatewayError` types. Implement parsing for `config.toml` supporting shell `${VAR}` expansions.
+  Implement the standard `VelariumGatewayError` types. Implement parsing for `config.toml` supporting shell `${VAR}` expansions.
 * **Phase 3: State, Virtual Models & Adaptive Router Trait**
   Implement the `RoutingStrategy` trait and `AdaptivePriorityStrategy`. Incorporate `HalfOpen` states, `probe_in_flight` `AtomicBool` locks to defend against thundering herds, exponential backoffs, and idle-based decay aging. Add virtual model target list expansion.
 * **Phase 4: Non-Blocking Telemetry Ingest**
@@ -262,19 +262,19 @@ Defines Axum endpoints: `/v1/models`, `/v1/embeddings`, and `/v1/chat/completion
 ## 4. Verification Plan & Definition of Done
 
 ### Automated Verification
-* Unit tests in `vortex-gateway-core` for:
+* Unit tests in `velarium-gateway-core` for:
   * Unix `${VAR}` replacements.
   * Adaptive decay state-transitions.
   * Virtual models mapping.
   * Lock-free `AtomicBool` permits during `HalfOpen` states.
-* Performance tests inside `crates/vortex-gateway-core/benches/` or `crates/vortex-gateway-core/tests/` asserting the `< 2 ms` routing loop overhead under mock candidate environments.
-* Integration tests inside a dedicated directory `crates/vortex-gateway/tests/` utilizing mock upstreams to assert:
+* Performance tests inside `crates/velarium-gateway-core/benches/` or `crates/velarium-gateway-core/tests/` asserting the `< 2 ms` routing loop overhead under mock candidate environments.
+* Integration tests inside a dedicated directory `crates/velarium-gateway/tests/` utilizing mock upstreams to assert:
   * Successful retry loops on rate limits.
   * SSE event stream forwarding behavior.
 
 ### Definition of Done Checklist
 - [ ] `cargo clippy --workspace --all-targets` returns 0 warnings.
 - [ ] The project compiles successfully against the `x86_64-unknown-linux-musl` target.
-- [ ] Binary size for `target/release/vortex-gateway` is confirmed under 15 MB after running `strip`.
+- [ ] Binary size for `target/release/velarium-gateway` is confirmed under 15 MB after running `strip`.
 - [ ] Telemetry `try_send` drops events gracefully without allocating heap memory when the mock endpoint is forced offline.
 - [ ] `cargo fmt --check` passes with zero formatting issues.

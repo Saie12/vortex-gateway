@@ -11,12 +11,12 @@ env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  # Set thresholds tailored to vortex-gateway codebase
+  # Set thresholds tailored to velarium-gateway codebase
   # Thresholds set ~3pp below actual coverage to catch regressions without false-alarming.
-  # Actual as of 2026-05-30: workspace 46.17, vortex-gateway 39.55, vortex-gateway-core 58.00
+  # Actual as of 2026-05-30: workspace 46.17, velarium-gateway 39.55, velarium-gateway-core 58.00
   COVERAGE_THRESHOLD_WORKSPACE: "43"
-  COVERAGE_THRESHOLD_VORTEX_GATEWAY: "36"
-  COVERAGE_THRESHOLD_VORTEX_CORE: "55"
+  COVERAGE_THRESHOLD_VELARIUM_GATEWAY: "36"
+  COVERAGE_THRESHOLD_VELARIUM_CORE: "55"
 
 jobs:
   format:
@@ -113,8 +113,8 @@ jobs:
         run: python3 .github/scripts/check_coverage.py coverage.json
         env:
           COVERAGE_THRESHOLD_WORKSPACE: ${{ env.COVERAGE_THRESHOLD_WORKSPACE }}
-          COVERAGE_THRESHOLD_VORTEX_GATEWAY: ${{ env.COVERAGE_THRESHOLD_VORTEX_GATEWAY }}
-          COVERAGE_THRESHOLD_VORTEX_CORE: ${{ env.COVERAGE_THRESHOLD_VORTEX_CORE }}
+          COVERAGE_THRESHOLD_VELARIUM_GATEWAY: ${{ env.COVERAGE_THRESHOLD_VELARIUM_GATEWAY }}
+          COVERAGE_THRESHOLD_VELARIUM_CORE: ${{ env.COVERAGE_THRESHOLD_VELARIUM_CORE }}
 
       - name: Upload coverage JSON artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
@@ -150,8 +150,8 @@ jobs:
             - Workspace line coverage: **${{ steps.coverage.outputs.workspace }}%**
             - Minimum workspace threshold: **${{ env.COVERAGE_THRESHOLD_WORKSPACE }}%**
             - Per-crate thresholds enforced in CI:
-              - `vortex-gateway`: `${{ env.COVERAGE_THRESHOLD_VORTEX_GATEWAY }}%`
-              - `vortex-gateway-core`: `${{ env.COVERAGE_THRESHOLD_VORTEX_GATEWAY_CORE }}%`
+              - `velarium-gateway`: `${{ env.COVERAGE_THRESHOLD_VELARIUM_GATEWAY }}%`
+              - `velarium-gateway-core`: `${{ env.COVERAGE_THRESHOLD_VELARIUM_CORE }}%`
             - Detailed HTML and JSON reports are available in the workflow artifacts and in Codecov trends.
 
   security:

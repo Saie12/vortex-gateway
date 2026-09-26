@@ -1,5 +1,5 @@
 [package]
-name = "vortex-gateway"
+name = "velarium-gateway"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -10,7 +10,7 @@ homepage.workspace = true
 description = "Minimalist adaptive routing LLM proxy in Rust"
 
 [dependencies]
-vortex-gateway-core = { path = "../vortex-gateway-core", version = "0.1.0" }
+velarium-gateway-core = { path = "../velarium-gateway-core", version = "0.1.0" }
 tokio = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

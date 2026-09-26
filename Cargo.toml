@@ -1,8 +1,8 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/vortex-gateway",
-    "crates/vortex-gateway-core",
+    "crates/velarium-gateway",
+    "crates/velarium-gateway-core",
 ]
 
 [workspace.package]
@@ -11,8 +11,8 @@ edition = "2021"
 rust-version = "1.85.1"
 authors = ["Saie12"]
 license = "Apache-2.0"
-repository = "https://github.com/Saie12/vortex-gateway"
-homepage = "https://github.com/Saie12/vortex-gateway"
+repository = "https://github.com/Saie12/velarium-gateway"
+homepage = "https://github.com/Saie12/velarium-gateway"
 
 [workspace.dependencies]
 tokio = { version = "1", features = ["full"] }

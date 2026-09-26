@@ -1,13 +1,13 @@
-# `vortex-gateway` 🦀 (Vortex Gateway)
+# `velarium-gateway` 🦀 (Velarium Gateway)
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Rust](https://img.shields.io/badge/Rust-1.85.1%2B-orange.svg)](https://www.rust-lang.org/)
-[![CI](https://github.com/planetf1/vortex-gateway/actions/workflows/ci.yml/badge.svg)](https://github.com/planetf1/vortex-gateway/actions/workflows/ci.yml)
-[![crates.io](https://img.shields.io/crates/v/vortex-gateway.svg)](https://crates.io/crates/vortex-gateway)
+[![CI](https://github.com/Saie12/velarium-gateway/actions/workflows/ci.yml/badge.svg)](https://github.com/Saie12/velarium-gateway/actions/workflows/ci.yml)
+[![crates.io](https://img.shields.io/crates/v/velarium-gateway.svg)](https://crates.io/crates/velarium-gateway)
 
-`vortex-gateway` (Vortex Gateway) is an ultra-minimalist, high-resilience adaptive routing LLM gateway written in Rust. It exposes an OpenAI-compatible interface, proxying requests to a tiered fallback pool of LLM providers with automatic rate-limit detection, circuit breakers, and failover.
+`velarium-gateway` (Velarium Gateway) is an ultra-minimalist, high-resilience adaptive routing LLM gateway written in Rust. It exposes an OpenAI-compatible interface, proxying requests to a tiered fallback pool of LLM providers with automatic rate-limit detection, circuit breakers, and failover.
 
-Built to operate entirely in memory with zero local disk persistence, `vortex-gateway` is optimized for resource-constrained edge devices (like OpenWrt routers), developer workstations, and background daemons. The **stripped release binary is ~2.6 MB** and idle RAM usage is **~14 MB**.
+Built to operate entirely in memory with zero local disk persistence, `velarium-gateway` is optimized for resource-constrained edge devices (like OpenWrt routers), developer workstations, and background daemons. The **stripped release binary is ~2.6 MB** and idle RAM usage is **~14 MB**.
 
 ---
 
@@ -18,7 +18,7 @@ Built to operate entirely in memory with zero local disk persistence, `vortex-ga
 * **Adaptive Circuit Breaker**: Strict `HalfOpen` state machine with lock-free `probe_in_flight` atomic check-and-set. Rate limits and server errors trip per-provider circuits with exponential backoff. Idle-based penalty decay automatically rehabilitates providers.
 * **Tiered Failover**: Configure fallback chains across multiple providers. If the primary returns 429 or 5xx, the proxy transparently cascades to the next.
 * **Hot Config Reloading**: `SIGHUP` signal or `POST /reload` HTTP endpoint — parses updated `config.toml` and hot-swaps the provider pool via `tokio::sync::watch` without dropping connections.
-* **Local Stats Dashboard**: Every provider tracks request count, success count, token volumes, and last request time via lock-free atomics. Query via `vortex-gateway status` or `curl /status` — no external collector needed.
+* **Local Stats Dashboard**: Every provider tracks request count, success count, token volumes, and last request time via lock-free atomics. Query via `velarium-gateway status` or `curl /status` — no external collector needed.
 * **OOM-Proof Telemetry**: Bounded OTel event channel (1024 cap) with non-blocking `try_send` drops. If `otelite` is offline, telemetry degrades gracefully and the proxy keeps running.
 * **W3C Trace Context Propagation**: Extracts and injects `traceparent` headers for continuous trace spans.
 * **Dual-Stack IPv4/IPv6**: Configurable via `bind_family`: `"ipv4"` (default), `"ipv6"`, or `"dual"` for both.
@@ -40,13 +40,13 @@ headers. Browser-based applications can call the proxy directly.
 ## 📦 Project Layout
 
 ```
-vortex-gateway/
+velarium-gateway/
 ├── Cargo.toml              # Workspace root
 ├── config.toml             # Multi-tier cloud provider config (6 providers)
 ├── config-local-test.toml  # Local-only Ollama config for testing
 ├── crates/
-│   ├── vortex-gateway-core/         # Core: config parsing, circuit breaker, router, telemetry
-│   └── vortex-gateway/              # CLI: Axum server, routes, signal handling, admin API
+│   ├── velarium-gateway-core/         # Core: config parsing, circuit breaker, router, telemetry
+│   └── velarium-gateway/              # CLI: Axum server, routes, signal handling, admin API
 ├── docs/
 │   ├── architecture.md     # Concurrency model, circuit breaker rules, telemetry
 │   └── providers.md        # Free-tier provider guide (snapshot: 2026-05-30)
@@ -61,8 +61,8 @@ vortex-gateway/
 ### 1. Homebrew (easiest — pre-compiled binary)
 
 ```bash
-brew tap planetf1/homebrew-tap
-brew install vortex-gateway
+brew tap Saie12/homebrew-tap
+brew install velarium-gateway
 ```
 
 Pre-compiled for macOS and Linux (aarch64 + x86_64). No Rust toolchain needed. Binary size: ~2.6 MB stripped.
@@ -70,37 +70,37 @@ Pre-compiled for macOS and Linux (aarch64 + x86_64). No Rust toolchain needed. B
 ### 2. Cargo (compiled from source)
 
 ```bash
-cargo install vortex-gateway
+cargo install velarium-gateway
 ```
 
-Builds from [crates.io](https://crates.io/crates/vortex-gateway). Requires Rust 1.85.1+.
+Builds from [crates.io](https://crates.io/crates/velarium-gateway). Requires Rust 1.85.1+.
 
 ### 3. From source (latest main)
 
 ```bash
-git clone https://github.com/planetf1/vortex-gateway.git
-cd vortex-gateway
+git clone https://github.com/Saie12/velarium-gateway.git
+cd velarium-gateway
 cargo build --release
-./target/release/vortex-gateway serve --config config-local-test.toml
+./target/release/velarium-gateway serve --config config-local-test.toml
 ```
 
 ### Default Config Location
 
-`vortex-gateway serve` looks for config in this order:
+`velarium-gateway serve` looks for config in this order:
 1. `--config <path>` if provided
-2. `~/.config/vortex-gateway/config.toml` (XDG base directory)
+2. `~/.config/velarium-gateway/config.toml` (XDG base directory)
 3. `./config.toml` (current directory, for development)
 
 ```bash
 # Quick start with local Ollama (no API keys needed):
-cp config-local-test.toml ~/.config/vortex-gateway/config.toml
-vortex-gateway serve
+cp config-local-test.toml ~/.config/velarium-gateway/config.toml
+velarium-gateway serve
 
 # Or with cloud providers (set env vars first):
 export GROQ_API_KEY="gsk_..."
 export GOOGLE_API_KEY="AIza..."
-cp config.toml ~/.config/vortex-gateway/config.toml
-vortex-gateway serve
+cp config.toml ~/.config/velarium-gateway/config.toml
+velarium-gateway serve
 ```
 
 
@@ -128,7 +128,7 @@ export OPENROUTER_API_KEY="sk-or-..."
 ### 2. Start the proxy
 
 ```bash
-vortex-gateway serve --config config.toml
+velarium-gateway serve --config config.toml
 ```
 
 ### 3. Test it
@@ -155,7 +155,7 @@ curl http://127.0.0.1:8080/status
 
 For local testing with Ollama instead of cloud providers:
 ```bash
-vortex-gateway serve --config config-local-test.toml
+velarium-gateway serve --config config-local-test.toml
 ```
 
 ## ⚙️ Configuration
@@ -209,30 +209,30 @@ smart = [
 
 ```bash
 # Start the proxy
-vortex-gateway serve                          # default: ~/.config/vortex-gateway/config.toml
-vortex-gateway serve -v                       # verbose: per-request routing info
-vortex-gateway serve -vv                      # trace: full request/response dump
+velarium-gateway serve                          # default: ~/.config/velarium-gateway/config.toml
+velarium-gateway serve -v                       # verbose: per-request routing info
+velarium-gateway serve -vv                      # trace: full request/response dump
 
 # Validate config syntax
-vortex-gateway validate                       # checks env vars, provider cross-refs
+velarium-gateway validate                       # checks env vars, provider cross-refs
 
 # Live dashboard (no external collector needed)
-vortex-gateway status                         # virtual model routing table + per-provider counters
+velarium-gateway status                         # virtual model routing table + per-provider counters
 
 # Manage providers at runtime
-vortex-gateway provider list                  # condensed provider status table
-vortex-gateway provider offline <name>        # take a provider out of rotation
-vortex-gateway provider online <name>         # re-enable a disabled provider
-vortex-gateway provider reset <name>          # clear circuit breaker, failures, rate limit
+velarium-gateway provider list                  # condensed provider status table
+velarium-gateway provider offline <name>        # take a provider out of rotation
+velarium-gateway provider online <name>         # re-enable a disabled provider
+velarium-gateway provider reset <name>          # clear circuit breaker, failures, rate limit
 
 # Config hot-reload (SIGHUP)
-vortex-gateway reload
+velarium-gateway reload
 
 # Graceful stop (drains in-flight SSE streams)
-vortex-gateway stop
+velarium-gateway stop
 ```
 
-### Example `vortex-gateway status` Output (after ~5 hours of real use)
+### Example `velarium-gateway status` Output (after ~5 hours of real use)
 
 ```
 Uptime: 311m 3s  |  Total Requests: 150
@@ -259,8 +259,8 @@ Virtual Model: basic
 | openrouter-basic     | ibm-granite/granite-4.1-8b                    | Closed (Healthy)               |       27 |       27 |
 | ollama-fallback      | granite4.1:3b                                 | Closed (Healthy)               |        0 |        0 |
 
-Use 'vortex-gateway provider offline <name>' to take a provider out of rotation.
-Use 'vortex-gateway provider reset <name>' to clear circuit breaker state.
+Use 'velarium-gateway provider offline <name>' to take a provider out of rotation.
+Use 'velarium-gateway provider reset <name>' to clear circuit breaker state.
 ```
 
 Piping through `cat` or a pager adds the full per-provider counter table with failure counts, token volumes, and last-request timestamps:
@@ -293,7 +293,7 @@ All admin endpoints (`/health`, `/status`, `/reload`, `/admin/*`) are restricted
 
 ## 📊 Telemetry
 
-vortex-gateway exports OpenTelemetry (OTel) traces and metrics via OTLP/HTTP JSON to a collector like [otelite](https://github.com/planetf1/otelite).
+velarium-gateway exports OpenTelemetry (OTel) traces and metrics via OTLP/HTTP JSON to a collector like [otelite](https://github.com/Saie12/otelite).
 
 ### Configuration
 
@@ -304,7 +304,7 @@ Set `otel_endpoint` in `[server]` to point at your OTLP HTTP collector:
 otel_endpoint = "http://127.0.0.1:4318"
 ```
 
-If the endpoint is unreachable or not configured, vortex-gateway logs a warning and starts
+If the endpoint is unreachable or not configured, velarium-gateway logs a warning and starts
 degraded — telemetry events are silently discarded. The proxy always works
 without a collector.
 
@@ -342,8 +342,8 @@ Logs are emitted via `tracing` to stdout with `EnvFilter` support:
 
 Override via `RUST_LOG` env var:
 ```bash
-export RUST_LOG=vortex-gateway=debug,vortex-gateway_core=info
-vortex-gateway serve
+export RUST_LOG=velarium-gateway=debug,velarium-gateway_core=info
+velarium-gateway serve
 ```
 
 ## 📄 License

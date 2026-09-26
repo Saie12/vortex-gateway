@@ -18,14 +18,14 @@ use axum::{
 use tower_http::cors::{Any, CorsLayer};
 
 use reqwest::Url;
-use vortex_gateway_core::config::Config;
-use vortex_gateway_core::state::{AppState, CircuitState, ProviderState};
-use vortex_gateway_core::telemetry::{TelemetryClient, TelemetryWorker};
+use velarium_gateway_core::config::Config;
+use velarium_gateway_core::state::{AppState, CircuitState, ProviderState};
+use velarium_gateway_core::telemetry::{TelemetryClient, TelemetryWorker};
 
 /// Resolves the config file path using XDG base directory conventions.
 ///
 /// If the given path exists, returns it as-is.
-/// Otherwise, tries the XDG config path: `~/.config/vortex-gateway/config.toml`
+/// Otherwise, tries the XDG config path: `~/.config/velarium-gateway/config.toml`
 /// (respecting `$XDG_CONFIG_HOME` if set).
 /// If that also doesn't exist, returns the original path so the caller
 /// produces a clear file-not-found error.
@@ -40,7 +40,7 @@ fn resolve_config_path(given: PathBuf) -> PathBuf {
             let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
             PathBuf::from(home).join(".config")
         })
-        .join("vortex-gateway")
+        .join("velarium-gateway")
         .join("config.toml");
     if xdg_config.exists() {
         return xdg_config;
@@ -52,9 +52,9 @@ mod routes;
 
 #[derive(Parser, Debug)]
 #[command(
-    name = "vortex-gateway",
+    name = "velarium-gateway",
     version = env!("CARGO_PKG_VERSION"),
-    author = "Nigel Jones",
+    author = "Saie12",
     about = "Minimalist adaptive routing LLM proxy"
 )]
 struct Cli {
@@ -67,12 +67,12 @@ enum Commands {
     /// Starts the gateway Axum server and telemetry worker
     Serve {
         /// Path to the configuration TOML file
-        /// (searches: <path>, ~/.config/vortex-gateway/config.toml, ./config.toml)
+        /// (searches: <path>, ~/.config/velarium-gateway/config.toml, ./config.toml)
         #[arg(
             short,
             long,
             default_value = "config.toml",
-            env = "VORTEX_GATEWAY_CONFIG"
+            env = "VELARIUM_GATEWAY_CONFIG"
         )]
         config: PathBuf,
 
@@ -83,30 +83,30 @@ enum Commands {
     /// Parses and validates the configuration syntax and cross-references
     Validate {
         /// Path to the configuration TOML file
-        /// (searches: <path>, ~/.config/vortex-gateway/config.toml, ./config.toml)
+        /// (searches: <path>, ~/.config/velarium-gateway/config.toml, ./config.toml)
         #[arg(
             short,
             long,
             default_value = "config.toml",
-            env = "VORTEX_GATEWAY_CONFIG"
+            env = "VELARIUM_GATEWAY_CONFIG"
         )]
         config: PathBuf,
     },
     /// Fetches and displays the active health and circuit status from localhost
     Status {
         /// Port of the running gateway server
-        #[arg(short, long, default_value_t = 8080, env = "VORTEX_GATEWAY_PORT")]
+        #[arg(short, long, default_value_t = 8080, env = "VELARIUM_GATEWAY_PORT")]
         port: u16,
     },
     /// Triggers hot-reload by sending SIGHUP to the running gateway daemon
     Reload {
-        /// PID of the running vortex-gateway process (optional, reads from /tmp/vortex-gateway.pid by default)
+        /// PID of the running velarium-gateway process (optional, reads from /tmp/velarium-gateway.pid by default)
         #[arg(short, long)]
         pid: Option<u32>,
     },
-    /// Gracefully stops the running vortex-gateway daemon (sends SIGTERM)
+    /// Gracefully stops the running velarium-gateway daemon (sends SIGTERM)
     Stop {
-        /// PID of the running vortex-gateway process (optional, reads from /tmp/vortex-gateway.pid by default)
+        /// PID of the running velarium-gateway process (optional, reads from /tmp/velarium-gateway.pid by default)
         #[arg(short, long)]
         pid: Option<u32>,
     },
@@ -120,7 +120,7 @@ enum ProviderCommand {
     /// List all providers and their circuit state
     List {
         /// Port of the running gateway server
-        #[arg(short, long, default_value_t = 8080, env = "VORTEX_GATEWAY_PORT")]
+        #[arg(short, long, default_value_t = 8080, env = "VELARIUM_GATEWAY_PORT")]
         port: u16,
     },
     /// Take a provider offline (circuit breaker + manual disabled)
@@ -128,7 +128,7 @@ enum ProviderCommand {
         /// Name of the provider to take offline
         name: String,
         /// Port of the running gateway server
-        #[arg(short, long, default_value_t = 8080, env = "VORTEX_GATEWAY_PORT")]
+        #[arg(short, long, default_value_t = 8080, env = "VELARIUM_GATEWAY_PORT")]
         port: u16,
     },
     /// Bring a provider back online
@@ -136,7 +136,7 @@ enum ProviderCommand {
         /// Name of the provider to bring online
         name: String,
         /// Port of the running gateway server
-        #[arg(short, long, default_value_t = 8080, env = "VORTEX_GATEWAY_PORT")]
+        #[arg(short, long, default_value_t = 8080, env = "VELARIUM_GATEWAY_PORT")]
         port: u16,
     },
     /// Reset a provider's circuit breaker, failures, and rate limit
@@ -144,7 +144,7 @@ enum ProviderCommand {
         /// Name of the provider to reset
         name: String,
         /// Port of the running gateway server
-        #[arg(short, long, default_value_t = 8080, env = "VORTEX_GATEWAY_PORT")]
+        #[arg(short, long, default_value_t = 8080, env = "VELARIUM_GATEWAY_PORT")]
         port: u16,
     },
 }
@@ -239,7 +239,7 @@ fn build_app_state(config: Config) -> Result<AppState, String> {
 
 fn write_pid_file() -> std::io::Result<()> {
     let pid = std::process::id();
-    std::fs::write("/tmp/vortex-gateway.pid", pid.to_string())
+    std::fs::write("/tmp/velarium-gateway.pid", pid.to_string())
 }
 
 fn send_sighup(pid: u32) -> std::io::Result<()> {
@@ -258,7 +258,7 @@ fn send_sighup(pid: u32) -> std::io::Result<()> {
 
 /// Generates a random request ID for response correlation.
 fn generate_request_id() -> String {
-    format!("vortex-gateway-{:016x}", rand::random::<u64>())
+    format!("velarium-gateway-{:016x}", rand::random::<u64>())
 }
 
 /// Middleware that adds an `x-request-id` header to every response.
@@ -271,7 +271,7 @@ async fn add_request_id(mut req: Request<Body>, next: Next) -> Response {
     req.extensions_mut().insert(request_id.clone());
     let mut response = next.run(req).await;
     if !response.headers().contains_key("x-request-id") {
-        // SAFETY: generate_request_id produces only ASCII hex chars and "vortex-gateway-" prefix.
+        // SAFETY: generate_request_id produces only ASCII hex chars and "velarium-gateway-" prefix.
         response.headers_mut().insert(
             "x-request-id",
             HeaderValue::from_str(&request_id)
@@ -296,7 +296,7 @@ async fn localhost_only(
     if is_local {
         next.run(req).await
     } else {
-        warn!(target: "vortex-gateway::security", "Blocked external attempt to access administrative route from IP: {}", addr.ip());
+        warn!(target: "velarium-gateway::security", "Blocked external attempt to access administrative route from IP: {}", addr.ip());
         let body = serde_json::json!({
             "error": {
                 "message": "Access denied: administrative routes are localhost-only",
@@ -347,7 +347,7 @@ async fn shutdown_signal() {
     }
 
     // Clean up PID file on shutdown
-    let _ = std::fs::remove_file("/tmp/vortex-gateway.pid");
+    let _ = std::fs::remove_file("/tmp/velarium-gateway.pid");
 }
 
 async fn handle_http_reload(
@@ -643,8 +643,11 @@ async fn run_status(port: u16) -> Result<(), Box<dyn std::error::Error>> {
     let res = match client.get(&url).send().await {
         Ok(r) => r,
         Err(e) if e.is_connect() => {
-            println!("vortex-gateway is not running on http://127.0.0.1:{}", port);
-            println!("Start it with: vortex-gateway serve");
+            println!(
+                "velarium-gateway is not running on http://127.0.0.1:{}",
+                port
+            );
+            println!("Start it with: velarium-gateway serve");
             return Ok(());
         },
         Err(e) => return Err(e.into()),
@@ -740,19 +743,21 @@ async fn run_status(port: u16) -> Result<(), Box<dyn std::error::Error>> {
 fn run_reload(pid_opt: Option<u32>) -> Result<(), Box<dyn std::error::Error>> {
     let pid = match pid_opt {
         Some(p) => p,
-        None => match std::fs::read_to_string("/tmp/vortex-gateway.pid") {
-            Ok(content) => match content.trim().parse::<u32>() {
-                Ok(p) => p,
+        None => {
+            match std::fs::read_to_string("/tmp/velarium-gateway.pid") {
+                Ok(content) => match content.trim().parse::<u32>() {
+                    Ok(p) => p,
+                    Err(_) => {
+                        println!("Invalid PID in /tmp/velarium-gateway.pid");
+                        return Ok(());
+                    },
+                },
                 Err(_) => {
-                    println!("Invalid PID in /tmp/vortex-gateway.pid");
+                    println!("velarium-gateway is not running (no PID file at /tmp/velarium-gateway.pid)");
+                    println!("Start it with: velarium-gateway serve");
                     return Ok(());
                 },
-            },
-            Err(_) => {
-                println!("vortex-gateway is not running (no PID file at /tmp/vortex-gateway.pid)");
-                println!("Start it with: vortex-gateway serve");
-                return Ok(());
-            },
+            }
         },
     };
     send_sighup(pid)?;
@@ -766,19 +771,21 @@ fn run_reload(pid_opt: Option<u32>) -> Result<(), Box<dyn std::error::Error>> {
 fn run_stop(pid_opt: Option<u32>) -> Result<(), Box<dyn std::error::Error>> {
     let pid = match pid_opt {
         Some(p) => p,
-        None => match std::fs::read_to_string("/tmp/vortex-gateway.pid") {
-            Ok(content) => match content.trim().parse::<u32>() {
-                Ok(p) => p,
+        None => {
+            match std::fs::read_to_string("/tmp/velarium-gateway.pid") {
+                Ok(content) => match content.trim().parse::<u32>() {
+                    Ok(p) => p,
+                    Err(_) => {
+                        println!("Invalid PID in /tmp/velarium-gateway.pid");
+                        return Ok(());
+                    },
+                },
                 Err(_) => {
-                    println!("Invalid PID in /tmp/vortex-gateway.pid");
+                    println!("velarium-gateway is not running (no PID file at /tmp/velarium-gateway.pid)");
+                    println!("Start it with: velarium-gateway serve");
                     return Ok(());
                 },
-            },
-            Err(_) => {
-                println!("vortex-gateway is not running (no PID file at /tmp/vortex-gateway.pid)");
-                println!("Start it with: vortex-gateway serve");
-                return Ok(());
-            },
+            }
         },
     };
 
@@ -809,8 +816,11 @@ async fn run_provider_offline(name: &str, port: u16) -> Result<(), Box<dyn std::
     let res = match client.post(&url).send().await {
         Ok(r) => r,
         Err(e) if e.is_connect() => {
-            println!("vortex-gateway is not running on http://127.0.0.1:{}", port);
-            println!("Start it with: vortex-gateway serve");
+            println!(
+                "velarium-gateway is not running on http://127.0.0.1:{}",
+                port
+            );
+            println!("Start it with: velarium-gateway serve");
             return Ok(());
         },
         Err(e) => return Err(e.into()),
@@ -826,8 +836,11 @@ async fn run_provider_online(name: &str, port: u16) -> Result<(), Box<dyn std::e
     let res = match client.post(&url).send().await {
         Ok(r) => r,
         Err(e) if e.is_connect() => {
-            println!("vortex-gateway is not running on http://127.0.0.1:{}", port);
-            println!("Start it with: vortex-gateway serve");
+            println!(
+                "velarium-gateway is not running on http://127.0.0.1:{}",
+                port
+            );
+            println!("Start it with: velarium-gateway serve");
             return Ok(());
         },
         Err(e) => return Err(e.into()),
@@ -843,8 +856,11 @@ async fn run_provider_reset(name: &str, port: u16) -> Result<(), Box<dyn std::er
     let res = match client.post(&url).send().await {
         Ok(r) => r,
         Err(e) if e.is_connect() => {
-            println!("vortex-gateway is not running on http://127.0.0.1:{}", port);
-            println!("Start it with: vortex-gateway serve");
+            println!(
+                "velarium-gateway is not running on http://127.0.0.1:{}",
+                port
+            );
+            println!("Start it with: velarium-gateway serve");
             return Ok(());
         },
         Err(e) => return Err(e.into()),
@@ -860,8 +876,11 @@ async fn run_provider_list(port: u16) -> Result<(), Box<dyn std::error::Error>> 
     let res = match client.get(&url).send().await {
         Ok(r) => r,
         Err(e) if e.is_connect() => {
-            println!("vortex-gateway is not running on http://127.0.0.1:{}", port);
-            println!("Start it with: vortex-gateway serve");
+            println!(
+                "velarium-gateway is not running on http://127.0.0.1:{}",
+                port
+            );
+            println!("Start it with: velarium-gateway serve");
             return Ok(());
         },
         Err(e) => return Err(e.into()),
@@ -919,8 +938,8 @@ async fn run_provider_list(port: u16) -> Result<(), Box<dyn std::error::Error>> 
     }
     println!("+----------------------+-----------------------------------------------+--------------------------------+----------+----------+");
     println!();
-    println!("Use 'vortex-gateway provider offline <name>' to take a provider out of rotation.");
-    println!("Use 'vortex-gateway provider reset <name>' to clear circuit breaker state.");
+    println!("Use 'velarium-gateway provider offline <name>' to take a provider out of rotation.");
+    println!("Use 'velarium-gateway provider reset <name>' to clear circuit breaker state.");
     println!();
 
     Ok(())
@@ -933,11 +952,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Build the log filter based on verbosity level
     let log_filter = match &cli.command {
         Commands::Serve { verbose, .. } => match verbose {
-            0 => "info,vortex_gateway=info,vortex_gateway_core=info",
-            1 => "info,vortex_gateway=debug,vortex_gateway_core=debug",
+            0 => "info,velarium_gateway=info,velarium_gateway_core=info",
+            1 => "info,velarium_gateway=debug,velarium_gateway_core=debug",
             _ => "trace",
         },
-        _ => "info,vortex_gateway=debug,vortex_gateway_core=debug",
+        _ => "info,velarium_gateway=debug,velarium_gateway_core=debug",
     };
 
     let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new(log_filter));
@@ -987,7 +1006,7 @@ mod integration_tests {
     use serde_json::Value;
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
     use tokio::net::TcpListener;
-    use vortex_gateway_core::config::VirtualModelTarget;
+    use velarium_gateway_core::config::VirtualModelTarget;
 
     async fn spawn_mock_upstream(responses: Vec<String>) -> SocketAddr {
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
@@ -1254,7 +1273,7 @@ mod integration_tests {
     /// Circuit breaker trips after 3 failures; failover routes to healthy provider.
     #[tokio::test]
     async fn test_integration_circuit_breaker_failover() {
-        use vortex_gateway_core::router::{AdaptivePriorityStrategy, RoutingStrategy};
+        use velarium_gateway_core::router::{AdaptivePriorityStrategy, RoutingStrategy};
 
         let p1 = ProviderState {
             name: "primary".into(),
@@ -2357,7 +2376,7 @@ mod integration_tests {
     // Integration tests: x-request-id header
     // -----------------------------------------------------------------------
 
-    /// Successful response includes x-request-id matching vortex-gateway-[0-9a-f]{16}.
+    /// Successful response includes x-request-id matching velarium-gateway-[0-9a-f]{16}.
     #[tokio::test]
     async fn test_integration_request_id_on_success() {
         let body = r#"{"choices":[{"message":{"role":"assistant","content":"Hello from prov"}}]}"#;
@@ -2403,18 +2422,18 @@ mod integration_tests {
             .expect("x-request-id header should be present");
         let id_str = request_id.to_str().unwrap();
         assert!(
-            id_str.starts_with("vortex-gateway-"),
-            "x-request-id should start with 'vortex-gateway-', got: {}",
+            id_str.starts_with("velarium-gateway-"),
+            "x-request-id should start with 'velarium-gateway-', got: {}",
             id_str
         );
         assert_eq!(
             id_str.len(),
-            31,
-            "x-request-id should be 'vortex-gateway-' + 16 hex chars (len 31), got len {}",
+            33,
+            "x-request-id should be 'velarium-gateway-' + 16 hex chars (len 33), got len {}",
             id_str.len()
         );
         // Verify remaining chars are valid hex
-        let hex_part = &id_str[15..];
+        let hex_part = &id_str[17..];
         assert!(
             hex_part.chars().all(|c| c.is_ascii_hexdigit()),
             "x-request-id hex part should be all hex chars, got: {}",
@@ -2461,10 +2480,10 @@ mod integration_tests {
             .expect("x-request-id header should be present on error responses");
         let id_str = request_id.to_str().unwrap();
         assert!(
-            id_str.starts_with("vortex-gateway-"),
-            "x-request-id should start with 'vortex-gateway-', got: {}",
+            id_str.starts_with("velarium-gateway-"),
+            "x-request-id should start with 'velarium-gateway-', got: {}",
             id_str
         );
-        assert_eq!(id_str.len(), 31);
+        assert_eq!(id_str.len(), 33);
     }
 }

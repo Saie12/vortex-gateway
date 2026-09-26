@@ -1,6 +1,6 @@
-# CLAUDE.md - Developer Guide for `vortex-gateway`
+# CLAUDE.md - Developer Guide for `velarium-gateway`
 
-This guide outlines the commands and guidelines for building, testing, linting, and maintaining the `vortex-gateway` (Vortex Gateway) codebase.
+This guide outlines the commands and guidelines for building, testing, linting, and maintaining the `velarium-gateway` (Velarium Gateway) codebase.
 
 ## Build Commands
 - **Check Compilation**: `cargo check`
@@ -19,5 +19,5 @@ This guide outlines the commands and guidelines for building, testing, linting, 
 
 ## Code Guidelines
 - **Pure Rust TLS**: Enforce pure-Rust TLS by compiling with reqwest's `rustls-tls` feature to avoid dynamially linking `OpenSSL` on targeted edge routers (OpenWrt/musl).
-- **Zero unwraps**: Never use `.unwrap()` or `.expect()` in user-facing paths. Convert all errors to `VortexGatewayError` or map them gracefully.
+- **Zero unwraps**: Never use `.unwrap()` or `.expect()` in user-facing paths. Convert all errors to `VelariumGatewayError` or map them gracefully.
 - **Lock-Free Hot Path**: Always preserve the lock-free atomic `probe_in_flight` permit when evaluating cooled down `HalfOpen` providers to defend against thundering herds under shared locks.

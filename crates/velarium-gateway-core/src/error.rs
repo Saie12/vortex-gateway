@@ -1,7 +1,7 @@
 use thiserror::Error;
 
 #[derive(Debug, Error)]
-pub enum VortexGatewayError {
+pub enum VelariumGatewayError {
     #[error("Configuration loading failed: {0}")]
     ConfigLoad(String),
 
@@ -30,4 +30,4 @@ pub enum VortexGatewayError {
     TelemetryInit(String),
 }
 
-pub type Result<T> = std::result::Result<T, VortexGatewayError>;
+pub type Result<T> = std::result::Result<T, VelariumGatewayError>;

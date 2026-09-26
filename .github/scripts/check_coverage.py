@@ -12,8 +12,8 @@ from pathlib import Path
 def _load_thresholds() -> dict[str, float]:
     thresholds = {
         "workspace": float(os.environ["COVERAGE_THRESHOLD_WORKSPACE"]),
-        "vortex-gateway": float(os.environ["COVERAGE_THRESHOLD_VORTEX_GATEWAY"]),
-        "vortex-gateway-core": float(os.environ["COVERAGE_THRESHOLD_VORTEX_CORE"]),
+        "velarium-gateway": float(os.environ["COVERAGE_THRESHOLD_VELARIUM_GATEWAY"]),
+        "velarium-gateway-core": float(os.environ["COVERAGE_THRESHOLD_VELARIUM_CORE"]),
     }
     return thresholds
 
@@ -41,7 +41,7 @@ def _crate_percentages(data: dict) -> dict[str, float]:
 
     for file_entry in data["data"][0].get("files", []):
         filename: str = file_entry.get("filename", "")
-        # Match paths like .../crates/oxllm-core/src/lib.rs
+        # Match paths like .../crates/velarium-gateway-core/src/lib.rs
         parts = filename.replace("\\", "/").split("/")
         try:
             idx = parts.index("crates")

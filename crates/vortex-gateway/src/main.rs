@@ -54,7 +54,7 @@ mod routes;
 #[command(
     name = "vortex-gateway",
     version = env!("CARGO_PKG_VERSION"),
-    author = "Nigel Jones",
+    author = "Saie12",
     about = "Minimalist adaptive routing LLM proxy"
 )]
 struct Cli {

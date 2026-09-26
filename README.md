@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Rust](https://img.shields.io/badge/Rust-1.85.1%2B-orange.svg)](https://www.rust-lang.org/)
-[![CI](https://github.com/planetf1/vortex-gateway/actions/workflows/ci.yml/badge.svg)](https://github.com/planetf1/vortex-gateway/actions/workflows/ci.yml)
+[![CI](https://github.com/Saie12/vortex-gateway/actions/workflows/ci.yml/badge.svg)](https://github.com/Saie12/vortex-gateway/actions/workflows/ci.yml)
 [![crates.io](https://img.shields.io/crates/v/vortex-gateway.svg)](https://crates.io/crates/vortex-gateway)
 
 `vortex-gateway` (Vortex Gateway) is an ultra-minimalist, high-resilience adaptive routing LLM gateway written in Rust. It exposes an OpenAI-compatible interface, proxying requests to a tiered fallback pool of LLM providers with automatic rate-limit detection, circuit breakers, and failover.
@@ -61,7 +61,7 @@ vortex-gateway/
 ### 1. Homebrew (easiest — pre-compiled binary)
 
 ```bash
-brew tap planetf1/homebrew-tap
+brew tap Saie12/homebrew-tap
 brew install vortex-gateway
 ```
 
@@ -78,7 +78,7 @@ Builds from [crates.io](https://crates.io/crates/vortex-gateway). Requires Rust 
 ### 3. From source (latest main)
 
 ```bash
-git clone https://github.com/planetf1/vortex-gateway.git
+git clone https://github.com/Saie12/vortex-gateway.git
 cd vortex-gateway
 cargo build --release
 ./target/release/vortex-gateway serve --config config-local-test.toml
@@ -293,7 +293,7 @@ All admin endpoints (`/health`, `/status`, `/reload`, `/admin/*`) are restricted
 
 ## 📊 Telemetry
 
-vortex-gateway exports OpenTelemetry (OTel) traces and metrics via OTLP/HTTP JSON to a collector like [otelite](https://github.com/planetf1/otelite).
+vortex-gateway exports OpenTelemetry (OTel) traces and metrics via OTLP/HTTP JSON to a collector like [otelite](https://github.com/Saie12/otelite).
 
 ### Configuration
 

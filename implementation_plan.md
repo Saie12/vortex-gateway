@@ -82,10 +82,10 @@ members = [
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.85.1"
-authors = ["Nigel Jones"]
+authors = ["Saie12"]
 license = "Apache-2.0"
-repository = "https://github.com/planetf1/vortex-gateway"
-homepage = "https://github.com/planetf1/vortex-gateway"
+repository = "https://github.com/Saie12/vortex-gateway"
+homepage = "https://github.com/Saie12/vortex-gateway"
 
 [workspace.dependencies]
 tokio = { version = "1", features = ["full"] }
@@ -148,7 +148,7 @@ cargo-dist-version = "0.32.0"
 ci = "github"
 installers = ["shell", "homebrew"]
 targets = ["aarch64-apple-darwin", "aarch64-unknown-linux-gnu", "x86_64-apple-darwin", "x86_64-unknown-linux-gnu"]
-tap = "planetf1/homebrew-tap"
+tap = "Saie12/homebrew-tap"
 publish-jobs = ["homebrew"]
 pr-run-mode = "plan"
 install-updater = false

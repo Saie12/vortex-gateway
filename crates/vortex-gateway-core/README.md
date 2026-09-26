@@ -86,4 +86,4 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ## 📄 License
 
-Licensed under the Apache License, Version 2.0. See [LICENSE](https://github.com/planetf1/vortex-gateway/blob/main/LICENSE) for details.
+Licensed under the Apache License, Version 2.0. See [LICENSE](https://github.com/Saie12/vortex-gateway/blob/main/LICENSE) for details.

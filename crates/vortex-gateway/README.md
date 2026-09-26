@@ -26,7 +26,7 @@ You can install the `vortex-gateway` binary using either **Homebrew** (recommend
 ### 1. Via Homebrew (Pre-compiled)
 Install the pre-compiled binary instantly using your Homebrew formula tap:
 ```bash
-brew tap planetf1/homebrew-tap
+brew tap Saie12/homebrew-tap
 brew install vortex-gateway
 ```
 
@@ -72,4 +72,4 @@ vortex-gateway reload
 
 ## 📄 License
 
-Licensed under the Apache License, Version 2.0. See [LICENSE](https://github.com/planetf1/vortex-gateway/blob/main/LICENSE) for details.
+Licensed under the Apache License, Version 2.0. See [LICENSE](https://github.com/Saie12/vortex-gateway/blob/main/LICENSE) for details.
